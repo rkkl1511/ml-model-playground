@@ -1,0 +1,53 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #0b0b14;
+    color: #eaeaf5;
+}
+
+.page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+    padding: 24px;
+}
+
+h1 {
+    font-size: 3rem;
+    margin: 0;
+}
+
+.tagline {
+    color: #9a9ab5;
+    margin: 0 0 12px;
+}
+
+.badge {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    border: 1px solid #333;
+}
+
+.badge-online {
+    color: #4ade80;
+    border-color: #4ade80;
+}
+
+.badge-offline {
+    color: #f87171;
+    border-color: #f87171;
+}
+
+.badge-loading {
+    color: #fbbf24;
+    border-color: #fbbf24;
+}

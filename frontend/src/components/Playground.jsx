@@ -5,6 +5,8 @@ import SampleDatasets from "./SampleDatasets";
 import DatasetPreview from "./DatasetPreview";
 import { uploadCsv, loadSample } from "../api";
 
+import DataProfile from "./DataProfile";
+
 export default function Playground() {
     const [dataset, setDataset] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -55,6 +57,7 @@ export default function Playground() {
             <AnimatePresence mode="wait">
                 {dataset && <DatasetPreview key={dataset.dataset_id} dataset={dataset} />}
             </AnimatePresence>
+            {dataset && <DataProfile key={dataset.dataset_id} dataset={dataset} />}
         </section>
     );
 }

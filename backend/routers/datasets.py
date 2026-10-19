@@ -3,8 +3,9 @@ import io
 import pandas as pd
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
+from profiling import build_profile
 from samples import SAMPLES, build_sample, list_samples
-from store import save_dataset
+from store import save_dataset, get_dataset
 from summary import build_summary
 
 router = APIRouter(prefix="/api", tags=["datasets"])
@@ -72,3 +73,9 @@ async def upload_csv(file: UploadFile = File(...)):
 
     dataset_id = save_dataset(df, file.filename)
     return build_summary(dataset_id, file.filename, df)
+
+
+@router.get("/datasets/{dataset_id}/profile")
+def get_profile(dataset_id: str):
+    entry = get_dataset(dataset_id)
+    return build_profile(entry["df"])

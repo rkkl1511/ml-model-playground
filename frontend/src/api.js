@@ -31,3 +31,4 @@ export function uploadCsv(file) {
 export const getSamples = () => request("/api/samples");
 
 export const loadSample = (id) => request(`/api/samples/${id}`, { method: "POST" });
+export const getProfile = (id) => request(`/api/datasets/${id}/profile`);

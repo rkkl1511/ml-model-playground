@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { Sparkles, ArrowRight, Code } from "lucide-react";
 import CountUp from "./CountUp";
+import RotatingWord from "./RotatingWord";
+import ConfusionPreview from "./ConfusionPreview";
 
-// Parent controls timing, children just say "hidden -> show".
 const container = {
     hidden: {},
     show: { transition: { staggerChildren: 0.12 } },
@@ -25,14 +26,16 @@ function DemoCard() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
         >
-            {/* Second motion layer = endless floating loop */}
             <motion.div
                 animate={{ y: [0, -12, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                 className="glass rounded-3xl p-6 shadow-2xl shadow-neon-violet/20"
             >
-                <div className="mb-1 text-xs uppercase tracking-widest text-slate-400">
-                    Best accuracy
+                <div className="mb-1 flex items-center justify-between text-xs uppercase tracking-widest text-slate-400">
+                    <span>Best accuracy</span>
+                    <span className="rounded-full bg-white/10 px-2 py-0.5 normal-case tracking-normal">
+                        sample preview
+                    </span>
                 </div>
                 <div className="text-gradient font-display text-6xl font-bold">
                     <CountUp to={96.4} decimals={1} suffix="%" />
@@ -55,6 +58,10 @@ function DemoCard() {
                             </div>
                         </div>
                     ))}
+                </div>
+
+                <div className="mt-6">
+                    <ConfusionPreview />
                 </div>
             </motion.div>
         </motion.div>
@@ -79,7 +86,7 @@ export default function Hero() {
                 >
                     Train models.
                     <br />
-                    <span className="text-gradient">Watch them think.</span>
+                    Watch them <RotatingWord />
                 </motion.h1>
 
                 <motion.p variants={item} className="mt-6 max-w-md text-lg text-slate-400">

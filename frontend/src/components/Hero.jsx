@@ -96,7 +96,7 @@ export default function Hero() {
 
                 <motion.div variants={item} className="mt-8 flex flex-wrap gap-4">
                     <motion.a
-                        href="#features"
+                        href="#playground"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-neon-violet to-neon-cyan px-6 py-3 font-semibold text-white shadow-lg shadow-neon-violet/30"

@@ -7,6 +7,7 @@ import Hero from "./components/Hero";
 import Marquee from "./components/Marquee";
 import Features from "./components/Features";
 import HowItWorks from "./components/HowItWorks";
+import Playground from "./components/Playground";
 
 export default function App() {
     return (
@@ -19,6 +20,7 @@ export default function App() {
             <main>
                 <Hero />
                 <Marquee />
+                <Playground />
                 <Features />
                 <HowItWorks />
             </main>

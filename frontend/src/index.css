@@ -1,53 +1,57 @@
-* {
-    box-sizing: border-box;
+@import "tailwindcss";
+
+/* Design tokens: Tailwind turns these into classes like
+   bg-ink, text-neon-cyan, font-display, from-neon-violet ... */
+@theme {
+    --font-sans: "Inter", system-ui, sans-serif;
+    --font-display: "Space Grotesk", "Inter", sans-serif;
+    --color-ink: #07070f;
+    --color-neon-violet: #8b5cf6;
+    --color-neon-cyan: #22d3ee;
+    --color-neon-pink: #f472b6;
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 body {
     margin: 0;
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    background: #0b0b14;
-    color: #eaeaf5;
+    background: var(--color-ink);
+    color: #e8e8f5;
+    font-family: var(--font-sans);
 }
 
-.page {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    text-align: center;
-    padding: 24px;
+/* Glassmorphism: translucent fill + blur + hairline border */
+.glass {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-h1 {
-    font-size: 3rem;
-    margin: 0;
+/* Animated gradient text */
+.text-gradient {
+    background: linear-gradient(90deg, #8b5cf6, #22d3ee, #f472b6, #8b5cf6);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 6s linear infinite;
 }
 
-.tagline {
-    color: #9a9ab5;
-    margin: 0 0 12px;
+@keyframes shimmer {
+    to {
+        background-position: 200% center;
+    }
 }
 
-.badge {
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    border: 1px solid #333;
-}
-
-.badge-online {
-    color: #4ade80;
-    border-color: #4ade80;
-}
-
-.badge-offline {
-    color: #f87171;
-    border-color: #f87171;
-}
-
-.badge-loading {
-    color: #fbbf24;
-    border-color: #fbbf24;
+/* Faint grid that fades out toward the edges */
+.grid-bg {
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
 }

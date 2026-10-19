@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import datasets
+from routers import datasets, preprocess
 
 app = FastAPI(
     title="ML Model Playground API",
@@ -17,6 +17,7 @@ app.add_middleware(
 )
 
 app.include_router(datasets.router)
+app.include_router(preprocess.router)
 
 
 @app.get("/")

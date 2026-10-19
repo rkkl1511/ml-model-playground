@@ -12,6 +12,8 @@ async function request(url, options) {
         try {
             const body = await res.json();
             if (typeof body.detail === "string") message = body.detail;
+            // FastAPI validation errors arrive as a list of {msg, loc, ...}
+            else if (Array.isArray(body.detail)) message = body.detail.map((d) => d.msg).join("; ");
         } catch {
             /* response had no JSON body */
         }
@@ -32,3 +34,10 @@ export const getSamples = () => request("/api/samples");
 
 export const loadSample = (id) => request(`/api/samples/${id}`, { method: "POST" });
 export const getProfile = (id) => request(`/api/datasets/${id}/profile`);
+
+export const preprocess = (id, config) =>
+    request(`/api/datasets/${id}/preprocess`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
+    });

@@ -3,21 +3,22 @@ import { AnimatePresence, motion } from "framer-motion";
 import Dropzone from "./Dropzone";
 import SampleDatasets from "./SampleDatasets";
 import DatasetPreview from "./DatasetPreview";
-import { uploadCsv, loadSample } from "../api";
-
 import DataProfile from "./DataProfile";
+import Preprocessing from "./Preprocessing";
+import { uploadCsv, loadSample } from "../api";
 
 export default function Playground() {
     const [dataset, setDataset] = useState(null);
+    const [prepared, setPrepared] = useState(null); // used by training in Step 6
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    // One helper for both upload and sample: handles loading and errors in one place
     async function run(action) {
         setLoading(true);
         setError("");
         try {
             setDataset(await action());
+            setPrepared(null); // a new dataset needs fresh preprocessing
         } catch (err) {
             setError(err.message);
         } finally {
@@ -57,7 +58,16 @@ export default function Playground() {
             <AnimatePresence mode="wait">
                 {dataset && <DatasetPreview key={dataset.dataset_id} dataset={dataset} />}
             </AnimatePresence>
-            {dataset && <DataProfile key={dataset.dataset_id} dataset={dataset} />}
+
+            {dataset && <DataProfile key={`profile-${dataset.dataset_id}`} dataset={dataset} />}
+
+            {dataset && (
+                <Preprocessing
+                    key={`prep-${dataset.dataset_id}`}
+                    dataset={dataset}
+                    onPrepared={setPrepared}
+                />
+            )}
         </section>
     );
 }

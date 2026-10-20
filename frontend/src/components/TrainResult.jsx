@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import HealthRing from "./HealthRing";
 import Panel from "./Panel";
+import FoldChart from "./FoldChart";
 
 const toneStyle = {
     good: "border-emerald-400/30 bg-emerald-400/10 text-emerald-200",
@@ -50,14 +51,31 @@ function ClassificationResult({ result }) {
     return (
         <>
             <div className="grid gap-6 md:grid-cols-3">
-                <Panel title="Accuracy" subtitle="On the held-out test rows." className="h-full">
+                <Panel
+                    title={result.cv ? "Accuracy" : "Accuracy"}
+                    subtitle={
+                        result.cv
+                            ? "Averaged over several splits of the data."
+                            : "On the held-out test rows."
+                    }
+                    className="h-full"
+                >
                     <div className="flex justify-center">
-                        <HealthRing value={result.test_accuracy} decimals={1} label="accuracy" />
+                        <HealthRing
+                            value={headline}
+                            decimals={1}
+                            label={result.cv ? "cross-validated" : "accuracy"}
+                        />
                     </div>
                     <p className="mt-4 text-center text-sm text-slate-400">
                         {result.correct} of {result.test_rows} correct
                         {mistakes > 0 ? ` · ${mistakes} wrong` : " · none wrong"}
                     </p>
+                    {result.cv && (
+                        <p className="mt-1 text-center text-xs text-slate-500">
+                            on the single held-out split: {result.test_accuracy}%
+                        </p>
+                    )}
                 </Panel>
 
                 <Panel
@@ -66,9 +84,32 @@ function ClassificationResult({ result }) {
                     className="h-full md:col-span-2"
                 >
                     <div className="space-y-4">
-                        <Bar label="Always guess the most common class" value={result.baseline_accuracy} color="#64748b" delay={0.1} />
-                        <Bar label="Training rows (it studied these)" value={result.train_accuracy} color="#8b5cf6" delay={0.25} />
-                        <Bar label="Test rows (new to it)" value={result.test_accuracy} color="#22d3ee" delay={0.4} />
+                        <Bar
+                            label="Always guess the most common class"
+                            value={baseline}
+                            color="#64748b"
+                            delay={0.1}
+                        />
+                        <Bar
+                            label="Training rows (it studied these)"
+                            value={result.train_accuracy}
+                            color="#8b5cf6"
+                            delay={0.25}
+                        />
+                        {result.cv && (
+                            <Bar
+                                label={`Cross-validated (${result.cv.n_splits} folds, the one to trust)`}
+                                value={result.cv.mean}
+                                color="#22d3ee"
+                                delay={0.4}
+                            />
+                        )}
+                        <Bar
+                            label="One held-out split (noisier)"
+                            value={result.test_accuracy}
+                            color="#f472b6"
+                            delay={0.55}
+                        />
                     </div>
                     <p className={`mt-5 rounded-xl border px-4 py-3 text-sm ${toneStyle[v.tone]}`}>
                         <span className="font-semibold">{v.title}.</span> {v.text}
@@ -94,10 +135,10 @@ function ClassificationResult({ result }) {
 }
 
 /** The result of training a regressor: how close its guesses were. */
-function RegressionResult({ result }) {
+function RegressionResult({ result, headline }) {
     const v = result.verdict;
     // R-squared can be negative, so we show it on a scale that makes room.
-    const r2Percent = Math.max(0, Math.round(result.test_r2 * 100));
+    const r2Percent = Math.max(0, Math.round(headline * 100));
     const improvement = result.baseline_mae > 0
         ? Math.round((1 - result.mae / result.baseline_mae) * 100)
         : 0;
@@ -120,14 +161,19 @@ function RegressionResult({ result }) {
                         <HealthRing
                             value={r2Percent}
                             decimals={0}
-                            label={result.test_r2 >= 0 ? "r squared" : "worse than average"}
+                            label={headline >= 0 ? "r squared" : "worse than average"}
                         />
                     </div>
                     <p className="mt-4 text-center text-sm text-slate-400">
-                        R² of {result.test_r2.toFixed(3)}
-                        {result.test_r2 >= 0
+                        R² of {headline.toFixed(3)}
+                        {headline >= 0
                             ? ` · explains ${r2Percent}% of the variation`
                             : " · worse than guessing the average"}
+                        {result.cv && (
+                            <span className="block text-xs text-slate-500">
+                                single split: {result.test_r2.toFixed(3)}
+                            </span>
+                        )}
                     </p>
                 </Panel>
 
@@ -204,6 +250,19 @@ function RegressionResult({ result }) {
 
 export default function TrainResult({ result }) {
     const isRegression = result.task === "regression";
+    // The score to show: the cross-validated one when we have it, because a
+    // single split of a few dozen rows swings by several points.
+    const headline = result.cv
+        ? result.cv.mean
+        : isRegression
+            ? result.test_r2
+            : result.test_accuracy;
+    const headlineSuffix = result.cv ? "%" : "";
+    const baseline = result.cv
+        ? result.cv_baseline?.mean
+        : isRegression
+            ? result.baseline_r2
+            : result.baseline_accuracy;
 
     return (
         <motion.div
@@ -219,14 +278,23 @@ export default function TrainResult({ result }) {
                 <div>
                     <div className="font-display text-xl font-bold">{result.label} is trained</div>
                     <div className="text-sm text-slate-400">
-                        Scored on {result.test_rows} rows it has never seen.
+                        {result.cv
+                            ? `Cross-validated over ${result.cv.n_splits} folds, and scored on ${result.test_rows} held-back rows.`
+                            : `Scored on ${result.test_rows} rows it has never seen.`}
                     </div>
                 </div>
             </div>
 
             {isRegression
-                ? <RegressionResult result={result} />
-                : <ClassificationResult result={result} />}
+                ? <RegressionResult result={result} headline={headline} baseline={baseline} />
+                : <ClassificationResult result={result} headline={headline} baseline={baseline} />}
+
+            <FoldChart
+                cv={result.cv}
+                cvBaseline={result.cv_baseline}
+                holdout={isRegression ? result.test_r2 : result.test_accuracy}
+                holdoutLabel="The single test split"
+            />
         </motion.div>
     );
 }

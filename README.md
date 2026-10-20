@@ -40,6 +40,32 @@ answer away, and keeps the ones that merely look suspicious.
 than guessing, and the app says so, because that means the model found a
 pattern that does not hold on new rows.
 
+## Cross-validation, because one split is not a measurement
+
+Hold out 20% of the rows, train on the rest, and score on what was left
+behind. It is the standard way to check a model, and on a few dozen rows it
+is also a very noisy one: move a single row and the score moves by three
+points.
+
+So the playground trains every model several times over, on different rows,
+and reports the average with the spread attached:
+
+```
+iris, random forest
+  single split      90.0%
+  cross-validated   95.0% +/- 3.1     (folds: 95.8, 100, 95.8, 91.7, 91.7)
+  baseline          33.3%
+```
+
+The cross-validated number is the one the verdict is based on and the one
+the scoreboard ranks by. The single split is still shown, because the gap
+between the two is the interesting part: when they disagree, the split was
+either a lucky one or an unlucky one, and the app says which.
+
+Everything is rebuilt inside every fold, including the scaler and the
+encoders, so the folds cannot see each other. The tests check that, by
+running the cross-validation by hand and comparing the numbers.
+
 ## Tech stack
 
 | Layer    | Tools                                       |
@@ -75,8 +101,10 @@ python -m pytest tests -q
 ```
 
 The suite covers the parts that are easy to get quietly wrong: reading
-numbers out of messy text, folding spelling variants, spotting a leaking
-column, and proving that the test rows never influenced the training.
+numbers out of messy text, folding spelling variants, spotting a column that
+gives the answer away, proving that the test rows never influenced the
+training, and proving that every fold of the cross-validation rebuilds the
+whole pipeline from scratch.
 
 ## How the backend is arranged
 
@@ -90,7 +118,7 @@ column, and proving that the test rows never influenced the training.
 | `target.py` | Suggesting what to predict, and whether it is a label or a number |
 | `transformers.py` | The rare-category grouper, fitted inside the pipeline |
 | `preprocessing.py` | The pipeline: clean, split, then fit on the training rows only |
-| `trainer.py` | Training and scoring, always against a baseline |
+| `trainer.py` | Training, cross-validation, and scoring against a baseline |
 | `models.py` | The algorithm registry |
 
 ## Roadmap
@@ -104,9 +132,10 @@ column, and proving that the test rows never influenced the training.
 - [x] Step 7: Smart parsing: numbers, units, ranges, mixed measurements
 - [x] Step 8: Leakage detection and category canonicalisation
 - [x] Step 9: Regression targets and regressors
-- [ ] Step 10: Evaluation: confusion matrix and per-class report in the UI
-- [ ] Step 11: Model comparison across folds
-- [ ] Step 12: Feature importance
-- [ ] Step 13: Prediction demo
-- [ ] Step 14: Hyperparameter lab
-- [ ] Step 15: Polish, deploy
+- [x] Step 10: Cross-validation, with the spread shown next to every score
+- [ ] Step 11: Evaluation: confusion matrix and per-class report in the UI
+- [ ] Step 12: Model comparison across folds
+- [ ] Step 13: Feature importance
+- [ ] Step 14: Prediction demo
+- [ ] Step 15: Hyperparameter lab
+- [ ] Step 16: Polish, deploy

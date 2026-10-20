@@ -66,6 +66,7 @@ export default function Preprocessing({ dataset, onPrepared }) {
         rareThreshold: 20,
         parseNumbers: true,
         dropLeaky: true,
+        cvFolds: 5,
     });
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -108,6 +109,7 @@ export default function Preprocessing({ dataset, onPrepared }) {
                 rare_threshold: config.rareThreshold,
                 parse_numbers: config.parseNumbers,
                 drop_leaky: config.dropLeaky,
+                cv_folds: config.cvFolds,
             });
             setResult(res);
             setStale(false);
@@ -324,6 +326,24 @@ export default function Preprocessing({ dataset, onPrepared }) {
                                 className="w-20 rounded-lg border border-white/10 bg-ink px-2 py-1 text-sm outline-none focus:border-neon-violet"
                             />
                         </label>
+                    </div>
+
+                    <div className="mt-6 border-t border-white/10 pt-5">
+                        <Label
+                            title="6. Cross-validation"
+                            hint="Train the model several times over on different rows, and report the average. One test split of a few dozen rows is a noisy way to measure anything."
+                        />
+                        <Segmented
+                            id="cv-folds"
+                            value={String(config.cvFolds)}
+                            onChange={(v) => update({ cvFolds: parseInt(v, 10) })}
+                            options={[
+                                { value: "0", label: "Off" },
+                                { value: "3", label: "3 folds" },
+                                { value: "5", label: "5 folds" },
+                                { value: "10", label: "10 folds" },
+                            ]}
+                        />
                     </div>
                 </Panel>
 

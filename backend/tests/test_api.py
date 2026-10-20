@@ -2,6 +2,7 @@
 
 import io
 
+import pytest
 from fastapi.testclient import TestClient
 
 from fixtures import build_car_dataset
@@ -163,3 +164,55 @@ def test_the_iris_sample_still_trains():
     assert result["class_names"] == ["setosa", "versicolor", "virginica"]
     # And it beats the "always guess the most common class" baseline.
     assert result["test_accuracy"] > result["baseline_accuracy"]
+
+
+def test_training_reports_a_cross_validated_score():
+    body = client.post("/api/samples/iris").json()
+    client.post(f"/api/datasets/{body['dataset_id']}/preprocess",
+                json={"target": "species"})
+    result = client.post(
+        f"/api/datasets/{body['dataset_id']}/train",
+        json={"model_id": "random_forest"},
+    ).json()
+
+    cv = result["cv"]
+    assert cv is not None
+    assert cv["metric"] == "accuracy"
+    assert cv["n_splits"] == 5
+    assert len(cv["folds"]) == 5
+    assert all(0 <= fold <= 100 for fold in cv["folds"])
+    assert cv["mean"] == pytest.approx(sum(cv["folds"]) / 5, abs=0.01)
+
+    # The baseline is cross-validated the same way, so the two can be
+    # compared like with like.
+    assert result["cv_baseline"]["mean"] == pytest.approx(
+        result["baseline_accuracy"], abs=2)
+
+    # And the verdict says which number it is talking about.
+    assert "Cross-validated" in result["verdict"]["text"]
+
+
+def test_cross_validation_can_be_switched_off():
+    body = client.post("/api/samples/iris").json()
+    client.post(f"/api/datasets/{body['dataset_id']}/preprocess",
+                json={"target": "species", "cv_folds": 0})
+    result = client.post(
+        f"/api/datasets/{body['dataset_id']}/train",
+        json={"model_id": "random_forest"},
+    ).json()
+    assert result["cv"] is None
+    assert "held-out test rows" in result["verdict"]["text"]
+
+
+def test_a_regression_model_is_cross_validated_too():
+    body = client.post("/api/samples/car_market").json()
+    client.post(f"/api/datasets/{body['dataset_id']}/preprocess",
+                json={"target": "Price"})
+    result = client.post(
+        f"/api/datasets/{body['dataset_id']}/train",
+        json={"model_id": "random_forest_regressor"},
+    ).json()
+    assert result["cv"]["metric"] == "r2"
+    assert len(result["cv"]["folds"]) == 5
+    # R-squared is a ratio, so it is not turned into a percentage.
+    assert all(-5 < fold < 5 for fold in result["cv"]["folds"])

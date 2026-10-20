@@ -31,8 +31,10 @@ LEAK_PURITY = 0.95
 COPY_PURITY = 0.90
 
 # A numeric feature this correlated with a numeric target is the same number
-# wearing a different name.
-LEAK_CORRELATION = 0.98
+# wearing a different name. The bar is very high on purpose: a feature that
+# predicts the target well is a good feature, and dropping those would leave
+# the model with nothing. Only a near-exact duplicate is a copy.
+LEAK_CORRELATION = 0.999
 
 
 def _names(items, limit: int = 4) -> str:
@@ -108,16 +110,31 @@ def detect_leakage(df: pd.DataFrame, target: str, task: str) -> list[dict]:
                 valid = numbers.notna() & df[target].notna()
                 if valid.sum() > 10:
                     correlation = numbers[valid].corr(df[target][valid])
-                    if np.isfinite(correlation) and abs(correlation) >= LEAK_CORRELATION:
+                    # The same number twice, or the same number in different
+                    # units ("Price" and "Price in lakhs").
+                    identical = bool(
+                        np.allclose(
+                            numbers[valid].to_numpy(),
+                            df[target][valid].to_numpy(),
+                            rtol=1e-9, atol=1e-9,
+                        )
+                    )
+                    if identical or (np.isfinite(correlation)
+                                      and abs(correlation) >= LEAK_CORRELATION):
+                        if identical:
+                            detail = "It holds the same numbers as the target. "
+                        else:
+                            detail = (f"It holds the same numbers as the target in a "
+                                      f"different scale (correlation "
+                                      f"{correlation:.4f}). ")
                         findings.append({
                             "column": column,
                             "level": "warn",
                             "severity": "direct",
                             "purity": 1.0,
                             "baseline": 0.0,
-                            "title": f"'{column}' is almost the target",
-                            "text": f"It correlates {correlation:.3f} with the target, "
-                                    f"so a model can read the answer straight off it.",
+                            "title": f"'{column}' is a copy of the target",
+                            "text": detail + "A model would read the answer off it.",
                         })
             continue
 

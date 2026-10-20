@@ -67,6 +67,8 @@ class PreprocessConfig(BaseModel):
     parse_numbers: bool = True
     # Drop columns that give the answer away.
     drop_leaky: bool = True
+    # How many folds to cross-validate over. 0 turns it off.
+    cv_folds: int = Field(5, ge=0, le=20)
 
 
 @dataclass
@@ -91,6 +93,13 @@ class Prepared:
     # Columns that were removed because they gave the target away. The
     # trainer mentions them, because a low score is often their doing.
     dropped_leaks: list[str] = None
+    # The cleaned columns before one-hot encoding. Cross-validation needs
+    # these, so that it can build a fresh pipeline for every fold instead of
+    # reusing one that was fitted on all the training rows.
+    X_train_raw: pd.DataFrame = None
+    X_test_raw: pd.DataFrame = None
+    # The categorical columns whose rare values get rolled into a bucket.
+    group_cols: list[str] = None
 
 
 def _label(value) -> str:
@@ -497,6 +506,9 @@ def prepare(df: pd.DataFrame, cfg: PreprocessConfig) -> tuple[Prepared, dict]:
         task=task,
         target_unit=target_meta.get("unit"),
         dropped_leaks=[f["column"] for f in leakage] if cfg.drop_leaky else [],
+        X_train_raw=X_train.copy(),
+        X_test_raw=X_test.copy(),
+        group_cols=group_cols,
     )
     return prepared, summary
 

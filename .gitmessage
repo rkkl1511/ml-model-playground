@@ -1,0 +1,8 @@
+# One line, under 50 characters, imperative mood: "add cross-validation".
+# Everything after the # is stripped when you commit.
+#
+# Body: why the change was needed, in a few lines at most. What changed is
+# obvious from the diff, so do not describe it. A good body answers "why",
+# not "what".
+#
+# Keep it small enough to read in a log.

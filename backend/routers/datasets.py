@@ -5,7 +5,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from profiling import build_profile
 from samples import SAMPLES, build_sample, list_samples
-from store import save_dataset, get_dataset
+from store import get_dataset, save_dataset
 from summary import build_summary
 
 router = APIRouter(prefix="/api", tags=["datasets"])
@@ -22,11 +22,11 @@ def parse_csv(raw: bytes) -> pd.DataFrame:
             return pd.read_csv(io.BytesIO(raw), encoding=encoding)
         except UnicodeDecodeError:
             continue
-        except pd.errors.EmptyDataError:
-            raise HTTPException(status_code=400, detail="The file is empty.")
-        except pd.errors.ParserError:
+        except pd.errors.EmptyDataError as err:
+            raise HTTPException(status_code=400, detail="The file is empty.") from err
+        except pd.errors.ParserError as err:
             raise HTTPException(
-                status_code=400, detail="Could not parse the file as a CSV.")
+                status_code=400, detail="Could not parse the file as a CSV.") from err
     raise HTTPException(
         status_code=400, detail="Could not read the file's text encoding.")
 

@@ -1,9 +1,21 @@
-"""Column-by-column profiling of a DataFrame (what Step 4's charts show)."""
+"""Column-by-column profiling of a DataFrame (what Step 4's charts show).
+
+The point of profiling is to answer "what is actually in this file?" before
+anyone tries to model it. For a clean file that is easy. For a messy one it
+is the whole job: "Max Power" holding "963 hp" is a measurement, not a set
+of labels, and the histogram of its numbers says far more than a list of
+strings does.
+
+So profiling runs the same inference the preprocessor does, and reports what
+it found.
+"""
 
 import numpy as np
 import pandas as pd
 
-from summary import column_kind
+from infer import infer_frame
+from parsing import parse_column, suggest_extra_units
+from textnorm import canonical_key
 
 N_BINS = 12            # histogram bars
 MAX_CATEGORIES = 12    # most-common values shown for text columns
@@ -18,10 +30,10 @@ def _num(value):
     return round(float(value), 6)
 
 
-def _numeric_details(series: pd.Series) -> dict:
-    values = series.dropna()
+def _numeric_details(values: np.ndarray) -> dict:
+    values = np.asarray(values, dtype="float64")
     values = values[np.isfinite(values)]
-    if values.empty:
+    if values.size == 0:
         return {}
     counts, edges = np.histogram(values, bins=N_BINS)
     return {
@@ -29,9 +41,9 @@ def _numeric_details(series: pd.Series) -> dict:
             "mean": _num(values.mean()),
             "std": _num(values.std()),
             "min": _num(values.min()),
-            "q25": _num(values.quantile(0.25)),
-            "median": _num(values.median()),
-            "q75": _num(values.quantile(0.75)),
+            "q25": _num(np.percentile(values, 25)),
+            "median": _num(np.median(values)),
+            "q75": _num(np.percentile(values, 75)),
             "max": _num(values.max()),
         },
         "histogram": [
@@ -59,28 +71,47 @@ def _balance(series: pd.Series):
     }
 
 
-def profile_column(df: pd.DataFrame, name: str) -> dict:
+def _parsed_numbers(series: pd.Series) -> np.ndarray:
+    """The numbers hiding in a column, however they were written."""
+    cells, _ = parse_column(series.tolist())
+    extra = suggest_extra_units(cells)
+    if extra:
+        cells, _ = parse_column(series.tolist(), extra)
+    return np.array([c.value for c in cells
+                     if c.numeric and c.value is not None], dtype="float64")
+
+
+def profile_column(df: pd.DataFrame, name: str, info=None) -> dict:
     series = df[name]
-    kind = column_kind(series)
     n = len(series)
     missing = int(series.isna().sum())
 
-    info = {
+    payload = {
         "name": str(name),
-        "kind": kind,
+        "kind": info.kind if info else "categorical",
         "dtype": str(series.dtype),
         "missing": missing,
         "missing_pct": round(100 * missing / n, 1) if n else 0.0,
         "unique": int(series.nunique()),
-        "balance": _balance(series),
     }
-    if kind == "numeric":
-        info.update(_numeric_details(series))
+    if info:
+        payload["parse_ratio"] = round(info.parse_ratio, 2)
+        payload["unit"] = info.unit
+        payload["dimension"] = info.dimension
+        payload["mixed_units"] = info.mixed
+
+    if payload["kind"] == "numeric":
+        numbers = _parsed_numbers(series)
+        payload["balance"] = None
+        payload.update(_numeric_details(numbers))
     else:
-        top = series.value_counts().head(MAX_CATEGORIES)
-        info["top_values"] = [
+        # Show the folded-together spelling, so TOYOTA and Toyota read as one.
+        folded = series.map(lambda v: canonical_key(v) if isinstance(v, str) else v)
+        payload["balance"] = _balance(folded)
+        top = folded.value_counts().head(MAX_CATEGORIES)
+        payload["top_values"] = [
             {"value": str(k), "count": int(v)} for k, v in top.items()]
-    return info
+    return payload
 
 
 def _names(items: list[str], limit: int = 4) -> str:
@@ -89,7 +120,8 @@ def _names(items: list[str], limit: int = 4) -> str:
     return shown + (f" and {extra} more" if extra > 0 else "")
 
 
-def build_warnings(df: pd.DataFrame, columns: list[dict], duplicate_rows: int) -> list[dict]:
+def build_warnings(df: pd.DataFrame, columns: list[dict],
+                   duplicate_rows: int, infos: dict | None = None) -> list[dict]:
     """Plain-language heads-ups that a data scientist would notice at a glance."""
     n = len(df)
     out = []
@@ -136,6 +168,39 @@ def build_warnings(df: pd.DataFrame, columns: list[dict], duplicate_rows: int) -
             "text": f"Only {n} rows. Scores can swing a lot depending on which rows land in the test set. Cross-validation helps (Step 8).",
         })
 
+    if infos:
+        # The findings that only a real parser can produce.
+        parsed = [name for name, info in infos.items()
+                  if info.kind == "numeric" and info.parse_ratio < 1.0]
+        if parsed:
+            out.append({
+                "level": "info",
+                "title": "Numbers hiding in text",
+                "text": f"{_names(parsed)}: read as text, but most values are really "
+                        f"numbers written with units or symbols. We will read them "
+                        f"as numbers instead of turning them into categories.",
+            })
+
+        mixed = [name for name, info in infos.items() if info.mixed]
+        if mixed:
+            out.append({
+                "level": "warn",
+                "title": "Columns that mix different measurements",
+                "text": f"{_names(mixed)}: some cells hold one measurement and some "
+                        f"hold another (like cc and kWh). These get split into "
+                        f"separate columns.",
+            })
+
+        variants = [name for name, info in infos.items() if info.variants]
+        if variants:
+            out.append({
+                "level": "info",
+                "title": "Same value, different spelling",
+                "text": f"{_names(variants)}: values that differ only by case, like "
+                        f"TOYOTA and Toyota. They are folded into one value so the "
+                        f"model does not think they are different things.",
+            })
+
     text_cols = [c["name"] for c in columns if c["kind"] == "categorical"]
     if text_cols:
         out.append({
@@ -150,7 +215,8 @@ def build_warnings(df: pd.DataFrame, columns: list[dict], duplicate_rows: int) -
 def build_profile(df: pd.DataFrame) -> dict:
     duplicate_rows = int(df.duplicated().sum())
     missing_cells = int(df.isna().sum().sum())
-    columns = [profile_column(df, c) for c in df.columns]
+    infos = infer_frame(df)
+    columns = [profile_column(df, c, infos.get(str(c))) for c in df.columns]
 
     return {
         "rows": int(len(df)),
@@ -160,5 +226,5 @@ def build_profile(df: pd.DataFrame) -> dict:
         "complete_rows": int(df.notna().all(axis=1).sum()),
         "duplicate_rows": duplicate_rows,
         "columns": columns,
-        "warnings": build_warnings(df, columns, duplicate_rows),
+        "warnings": build_warnings(df, columns, duplicate_rows, infos),
     }

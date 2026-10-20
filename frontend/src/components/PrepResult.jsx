@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import CountUp from "./CountUp";
 import Panel from "./Panel";
+import ColumnDecisions from "./ColumnDecisions";
 
 const levelStyle = {
     warn: "border-amber-400/30 bg-amber-400/10 text-amber-200",
@@ -53,12 +54,20 @@ function MiniTable({ columns, rows, hidden = 0 }) {
 }
 
 export default function PrepResult({ result, stale }) {
-    const stats = [
-        { label: "Training rows", value: result.train_rows },
-        { label: "Test rows", value: result.test_rows },
-        { label: "Classes", value: result.n_classes },
-    ];
-    const maxClass = Math.max(...result.class_split.map((c) => c.train + c.test), 1);
+    const isRegression = result.task === "regression";
+    const stats = isRegression
+        ? [
+            { label: "Training rows", value: result.train_rows },
+            { label: "Test rows", value: result.test_rows },
+            { label: "Predicting", value: result.target },
+        ]
+        : [
+            { label: "Training rows", value: result.train_rows },
+            { label: "Test rows", value: result.test_rows },
+            { label: "Classes", value: result.n_classes },
+        ];
+    const classSplit = result.class_split || [];
+    const maxClass = Math.max(...classSplit.map((c) => c.train + c.test), 1);
 
     // Raw rows are objects keyed by column name; the tables want arrays of cells
     const beforeRows = result.before.rows.map((r) => result.before.columns.map((c) => r[c]));
@@ -92,7 +101,10 @@ export default function PrepResult({ result, stale }) {
                         className="glass rounded-2xl p-5"
                     >
                         <div className="text-xs uppercase tracking-widest text-slate-400">{s.label}</div>
-                        <div className="mt-1 font-display text-4xl font-bold">
+                        <div
+                            className={`mt-1 font-display font-bold ${typeof s.value === "number" ? "text-4xl" : "text-xl truncate"
+                                }`}
+                        >
                             <CountUp to={s.value} />
                         </div>
                     </motion.div>
@@ -148,49 +160,72 @@ export default function PrepResult({ result, stale }) {
                     </ol>
                 </Panel>
 
-                <Panel
-                    title="Split by class"
-                    subtitle={
-                        result.stratified
-                            ? "Stratified: every class is split in the same ratio."
-                            : "Random split: class ratios may differ between train and test."
-                    }
-                    className="h-full"
-                >
-                    <div className="mb-4 flex gap-4 text-xs text-slate-400">
-                        <span className="flex items-center gap-1.5">
-                            <span className="h-2.5 w-2.5 rounded-sm bg-neon-violet" /> Train
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                            <span className="h-2.5 w-2.5 rounded-sm bg-neon-pink" /> Test
-                        </span>
-                    </div>
-                    <div className="space-y-4">
-                        {result.class_split.map((c, i) => (
-                            <div key={c.label}>
-                                <div className="mb-1 flex justify-between gap-3 text-sm">
-                                    <span className="truncate text-slate-300">{c.label}</span>
-                                    <span className="shrink-0 text-slate-400">
-                                        {c.train} train · {c.test} test
-                                    </span>
+                {isRegression ? (
+                    <Panel
+                        title="What the model is predicting"
+                        subtitle="A number, so there are no classes to split."
+                        className="h-full"
+                    >
+                        <p className="text-sm text-slate-400">
+                            The target is a quantity, so the rows were split at random
+                            rather than keeping class ratios. Scoring will use
+                            R-squared and the size of the errors.
+                        </p>
+                        <div className="mt-4 rounded-xl bg-white/[0.04] px-4 py-3 text-sm text-slate-300">
+                            <div className="text-xs uppercase tracking-widest text-slate-400">Target column</div>
+                            <div className="mt-1 font-display text-lg font-bold">{result.target}</div>
+                        </div>
+                    </Panel>
+                ) : (
+                    <Panel
+                        title="Split by class"
+                        subtitle={
+                            result.stratified
+                                ? "Stratified: every class is split in the same ratio."
+                                : "Random split: class ratios may differ between train and test."
+                        }
+                        className="h-full"
+                    >
+                        <div className="mb-4 flex gap-4 text-xs text-slate-400">
+                            <span className="flex items-center gap-1.5">
+                                <span className="h-2.5 w-2.5 rounded-sm bg-neon-violet" /> Train
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="h-2.5 w-2.5 rounded-sm bg-neon-pink" /> Test
+                            </span>
+                        </div>
+                        <div className="space-y-4">
+                            {classSplit.map((c, i) => (
+                                <div key={c.label}>
+                                    <div className="mb-1 flex justify-between gap-3 text-sm">
+                                        <span className="truncate text-slate-300">{c.label}</span>
+                                        <span className="shrink-0 text-slate-400">
+                                            {c.train} train · {c.test} test
+                                        </span>
+                                    </div>
+                                    <div className="h-3 overflow-hidden rounded-full bg-white/10">
+                                        <motion.div
+                                            className="flex h-full"
+                                            initial={{ width: 0 }}
+                                            whileInView={{ width: `${((c.train + c.test) / maxClass) * 100}%` }}
+                                            viewport={{ once: true }}
+                                            transition={{ duration: 0.8, delay: i * 0.08, ease: "easeOut" }}
+                                        >
+                                            <div className="h-full bg-neon-violet" style={{ flex: c.train }} />
+                                            <div className="h-full bg-neon-pink" style={{ flex: c.test }} />
+                                        </motion.div>
+                                    </div>
                                 </div>
-                                <div className="h-3 overflow-hidden rounded-full bg-white/10">
-                                    <motion.div
-                                        className="flex h-full"
-                                        initial={{ width: 0 }}
-                                        whileInView={{ width: `${((c.train + c.test) / maxClass) * 100}%` }}
-                                        viewport={{ once: true }}
-                                        transition={{ duration: 0.8, delay: i * 0.08, ease: "easeOut" }}
-                                    >
-                                        <div className="h-full bg-neon-violet" style={{ flex: c.train }} />
-                                        <div className="h-full bg-neon-pink" style={{ flex: c.test }} />
-                                    </motion.div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </Panel>
+                            ))}
+                        </div>
+                    </Panel>
+                )}
             </div>
+
+            <ColumnDecisions
+                columns={result.columns}
+                leaked={result.leaked_columns || []}
+            />
 
             <Panel
                 title="Before and after"

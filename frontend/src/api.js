@@ -41,3 +41,13 @@ export const preprocess = (id, config) =>
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
     });
+
+export const getModels = (task) =>
+    request(`/api/models${task ? `?task=${task}` : ""}`);
+
+export const trainModel = (datasetId, modelId) =>
+    request(`/api/datasets/${datasetId}/train`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model_id: modelId }),
+    });

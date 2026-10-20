@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { motion } from "framer-motion";
 import {
     ResponsiveContainer,
@@ -27,6 +27,7 @@ function HistTooltip({ active, payload }) {
 }
 
 function NumericView({ col }) {
+    const gradientId = useId();
     if (!col.histogram) {
         return <p className="text-sm text-slate-400">No numeric values to chart.</p>;
     }
@@ -53,7 +54,7 @@ function NumericView({ col }) {
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barCategoryGap={2}>
                         <defs>
-                            <linearGradient id="histGrad" x1="0" y1="0" x2="0" y2="1">
+                            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="#22d3ee" />
                                 <stop offset="100%" stopColor="#8b5cf6" />
                             </linearGradient>
@@ -77,7 +78,7 @@ function NumericView({ col }) {
                         <Tooltip cursor={{ fill: "rgba(255,255,255,0.06)" }} content={<HistTooltip />} />
                         <Bar
                             dataKey="count"
-                            fill="url(#histGrad)"
+                            fill={`url(#${gradientId})`}
                             radius={[4, 4, 0, 0]}
                             animationDuration={900}
                         />
@@ -125,8 +126,17 @@ function CategoricalView({ col }) {
 }
 
 export default function ColumnExplorer({ columns }) {
-    const [name, setName] = useState(columns[0].name);
+    const [name, setName] = useState(columns[0]?.name);
     const col = columns.find((c) => c.name === name) ?? columns[0];
+
+    // If the data is reloaded, the column we were looking at may be gone.
+    useEffect(() => {
+        if (!columns.some((c) => c.name === name)) {
+            setName(columns[0]?.name);
+        }
+    }, [columns, name]);
+
+    if (!col) return null;
 
     return (
         <Panel
@@ -138,13 +148,14 @@ export default function ColumnExplorer({ columns }) {
             }
         >
             <select
-                value={name}
+                value={col.name}
                 onChange={(e) => setName(e.target.value)}
                 className="mb-5 w-full rounded-lg border border-white/10 bg-ink px-3 py-2 text-sm text-slate-200 outline-none focus:border-neon-violet sm:w-80"
             >
                 {columns.map((c) => (
                     <option key={c.name} value={c.name}>
                         {c.name} ({c.kind})
+                        {c.unit ? ` · ${c.unit}` : ""}
                     </option>
                 ))}
             </select>

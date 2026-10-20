@@ -7,6 +7,8 @@ import DataProfile from "./DataProfile";
 import Preprocessing from "./Preprocessing";
 import { uploadCsv, loadSample } from "../api";
 
+import Training from "./Training";
+
 export default function Playground() {
     const [dataset, setDataset] = useState(null);
     const [prepared, setPrepared] = useState(null); // used by training in Step 6
@@ -66,6 +68,13 @@ export default function Playground() {
                     key={`prep-${dataset.dataset_id}`}
                     dataset={dataset}
                     onPrepared={setPrepared}
+                />
+            )}
+            {dataset && (
+                <Training
+                    key={`train-${dataset.dataset_id}`}
+                    dataset={dataset}
+                    prepared={prepared}
                 />
             )}
         </section>

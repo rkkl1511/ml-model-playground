@@ -1,11 +1,12 @@
+// Only the algorithms that are actually in the backend registry.
 const algos = [
     "Logistic Regression",
     "K-Nearest Neighbors",
     "Random Forest",
     "Decision Tree",
-    "SVM",
-    "Naive Bayes",
-    "Gradient Boosting",
+    "Linear Regression",
+    "Ridge Regression",
+    "Random Forest Regressor",
 ];
 
 export default function Marquee() {

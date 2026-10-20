@@ -8,6 +8,7 @@ import Marquee from "./components/Marquee";
 import Features from "./components/Features";
 import HowItWorks from "./components/HowItWorks";
 import Playground from "./components/Playground";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 export default function App() {
     return (
@@ -20,7 +21,10 @@ export default function App() {
             <main>
                 <Hero />
                 <Marquee />
-                <Playground />
+                {/* One broken panel should never take the whole page down. */}
+                <ErrorBoundary>
+                    <Playground />
+                </ErrorBoundary>
                 <Features />
                 <HowItWorks />
             </main>

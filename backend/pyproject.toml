@@ -1,0 +1,32 @@
+[project]
+name = "ml-model-playground-backend"
+version = "0.2.0"
+description = "The API behind the ML Model Playground: read messy CSVs, train models, explain what happened."
+requires-python = ">=3.10"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle
+    "F",   # pyflakes
+    "W",   # warnings
+    "I",   # import sorting
+    "UP",  # pyupgrade
+    "B",   # bugbear
+]
+ignore = [
+    "E501",  # long lines: the report strings are long on purpose
+    "B008",  # function call in default argument
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests are allowed to be a bit loose about names.
+"tests/*" = ["E402"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

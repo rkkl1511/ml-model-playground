@@ -2,13 +2,39 @@ import { motion } from "framer-motion";
 import { Upload, Cpu, Target, Trophy, Sparkles, SlidersHorizontal } from "lucide-react";
 import TiltCard from "./TiltCard";
 
+// Every card here describes something the app really does. No promises
+// the code cannot keep.
 const features = [
-    { icon: Upload, title: "Drop in any CSV", text: "Drag and drop your data and get an instant profile of every column." },
-    { icon: Cpu, title: "Pick your algorithm", text: "Logistic Regression, KNN, Random Forest and more, one click each." },
-    { icon: Target, title: "Confusion matrices", text: "See exactly where your model gets confused, cell by cell." },
-    { icon: Trophy, title: "Model showdown", text: "Race every algorithm head to head on the same data." },
-    { icon: Sparkles, title: "Feature importance", text: "Find out which columns actually drive the predictions." },
-    { icon: SlidersHorizontal, title: "Tune and predict", text: "Drag sliders, retrain live, and test predictions on new inputs." },
+    {
+        icon: Upload,
+        title: "Drop in any CSV",
+        text: "Drag and drop your data and get an instant profile of every column.",
+    },
+    {
+        icon: Sparkles,
+        title: "Reads past the formatting",
+        text: 'Pulls real numbers out of "963 hp" and "$1,100,000", and treats TOYOTA and Toyota as one thing.',
+    },
+    {
+        icon: Target,
+        title: "Catches the cheats",
+        text: "Spots columns that give the target away, so your score is not a lie.",
+    },
+    {
+        icon: Cpu,
+        title: "Nine algorithms",
+        text: "Classifiers for labels, regressors for numbers. You pick the target, we pick the rest.",
+    },
+    {
+        icon: Trophy,
+        title: "Scored against a baseline",
+        text: "Every model is compared with a model that knows nothing. Only real wins count.",
+    },
+    {
+        icon: SlidersHorizontal,
+        title: "You stay in control",
+        text: "Every cleaning decision is explained, and every one of them is yours to change.",
+    },
 ];
 
 export default function Features() {

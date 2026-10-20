@@ -1,0 +1,14 @@
+# Keep line endings consistent across platforms. Git stores LF, and checks
+# out whatever the developer's platform prefers. Without this, a Windows
+# checkout rewrites the whole repository on the next commit.
+* text=auto
+
+# Binary files, so Git never tries to diff or normalise them.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.pkl binary
+*.joblib binary

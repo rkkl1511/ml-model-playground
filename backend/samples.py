@@ -1,7 +1,16 @@
-"""Built-in sample datasets that ship with scikit-learn (no download needed)."""
+"""Built-in sample datasets, so nobody has to upload a file to try things out.
+
+Three of them come straight from scikit-learn. The fourth is a deliberately
+messy used-car file: numbers written with units, prices with currency
+symbols, Windows dashes, the same brand spelled three ways, a column that
+leaks the target, and a cell that mixes cc with kWh. It is the dataset that
+shows what this tool is actually for.
+"""
 
 import pandas as pd
 from sklearn import datasets as skd
+
+from fixtures import build_car_dataset
 
 SAMPLES = {
     "iris": {
@@ -22,6 +31,12 @@ SAMPLES = {
         "loader": skd.load_breast_cancer,
         "target": "diagnosis",
     },
+    "car_market": {
+        "label": "Used cars (messy)",
+        "description": "420 listings · units in the text · a column that leaks",
+        "loader": None,
+        "target": "Price",
+    },
 }
 
 
@@ -36,6 +51,8 @@ def list_samples() -> list[dict]:
 
 def build_sample(sample_id: str) -> pd.DataFrame:
     meta = SAMPLES[sample_id]
+    if meta["loader"] is None:
+        return build_car_dataset()
     bunch = meta["loader"](as_frame=True)
     df = bunch.data.copy()
     # Turn numeric labels (0, 1, 2) into readable names ("setosa", ...)

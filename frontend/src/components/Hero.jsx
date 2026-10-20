@@ -13,10 +13,12 @@ const item = {
     show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 };
 
+// These are the real scores from a real run on the iris sample, so the
+// number on the landing page is one you can go and check.
 const models = [
-    { name: "Random Forest", score: 96.4, color: "from-neon-violet to-neon-pink" },
-    { name: "KNN", score: 93.1, color: "from-neon-cyan to-neon-violet" },
-    { name: "Logistic Regression", score: 91.8, color: "from-neon-pink to-neon-cyan" },
+    { name: "K-Nearest Neighbors", score: 93.3, color: "from-neon-cyan to-neon-violet" },
+    { name: "Logistic Regression", score: 93.3, color: "from-neon-pink to-neon-cyan" },
+    { name: "Random Forest", score: 90.0, color: "from-neon-violet to-neon-pink" },
 ];
 
 function DemoCard() {
@@ -34,11 +36,11 @@ function DemoCard() {
                 <div className="mb-1 flex items-center justify-between text-xs uppercase tracking-widest text-slate-400">
                     <span>Best accuracy</span>
                     <span className="rounded-full bg-white/10 px-2 py-0.5 normal-case tracking-normal">
-                        sample preview
+                        iris sample, real run
                     </span>
                 </div>
                 <div className="text-gradient font-display text-6xl font-bold">
-                    <CountUp to={96.4} decimals={1} suffix="%" />
+                    <CountUp to={93.3} decimals={1} suffix="%" />
                 </div>
 
                 <div className="mt-6 space-y-4">
@@ -90,8 +92,9 @@ export default function Hero() {
                 </motion.h1>
 
                 <motion.p variants={item} className="mt-6 max-w-md text-lg text-slate-400">
-                    Upload a dataset, pick an algorithm, and see accuracy, confusion
-                    matrices and feature importance come alive, all in your browser.
+                    Upload a messy real-world CSV, and watch it get read properly:
+                    numbers pulled out of units, prices cleaned up, and a model
+                    scored honestly against a baseline.
                 </motion.p>
 
                 <motion.div variants={item} className="mt-8 flex flex-wrap gap-4">
@@ -105,14 +108,12 @@ export default function Hero() {
                     </motion.a>
 
                     <motion.a
-                        href="https://github.com"
-                        target="_blank"
-                        rel="noreferrer"
+                        href="#how"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         className="glass inline-flex items-center gap-2 rounded-xl px-6 py-3 font-semibold text-slate-200"
                     >
-                        <Code size={18} /> View on GitHub
+                        <Code size={18} /> How it works
                     </motion.a>
                 </motion.div>
             </motion.div>

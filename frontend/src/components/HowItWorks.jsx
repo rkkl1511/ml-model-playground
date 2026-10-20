@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
 
 const steps = [
-    { n: 1, title: "Upload", text: "Bring a CSV or try a sample dataset." },
-    { n: 2, title: "Choose", text: "Pick a target and an algorithm." },
-    { n: 3, title: "Train", text: "Watch the model learn in real time." },
-    { n: 4, title: "Explore", text: "Dig into metrics and predictions." },
+    { n: 1, title: "Upload", text: "Bring a CSV, even a messy one, or try a sample." },
+    { n: 2, title: "Read", text: "We work out what each column really holds." },
+    { n: 3, title: "Train", text: "Pick an algorithm and see it learn, step by step." },
+    { n: 4, title: "Compare", text: "Every score is measured against a model that knows nothing." },
 ];
 
 export default function HowItWorks() {

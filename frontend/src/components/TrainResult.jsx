@@ -11,13 +11,18 @@ const toneStyle = {
 };
 
 function Bar({ label, value, max, color, delay, suffix = "%" }) {
-    const width = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
+    // A missing number should show a dash, never crash the page.
+    const safe = typeof value === "number" && Number.isFinite(value) ? value : 0;
+    const ceiling = typeof max === "number" && max > 0 ? max : Math.max(safe, 1);
+    const width = Math.max(0, Math.min(100, (safe / ceiling) * 100));
     return (
         <div>
             <div className="mb-1 flex justify-between gap-3 text-sm">
                 <span className="text-slate-300">{label}</span>
                 <span className="shrink-0 text-slate-400">
-                    {typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : value}
+                    {typeof value === "number" && Number.isFinite(value)
+                        ? value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+                        : "-"}
                     {suffix}
                 </span>
             </div>
@@ -35,7 +40,7 @@ function Bar({ label, value, max, color, delay, suffix = "%" }) {
 }
 
 /** The result of training a classifier: how often it was right. */
-function ClassificationResult({ result }) {
+function ClassificationResult({ result, headline, baseline }) {
     const mistakes = result.test_rows - result.correct;
     const v = result.verdict;
 
@@ -292,7 +297,7 @@ export default function TrainResult({ result }) {
             </div>
 
             {isRegression
-                ? <RegressionResult result={result} headline={headline} baseline={baseline} />
+                ? <RegressionResult result={result} headline={headline} />
                 : <ClassificationResult result={result} headline={headline} baseline={baseline} />}
 
             <FoldChart

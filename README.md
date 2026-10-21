@@ -133,7 +133,7 @@ whole pipeline from scratch.
 - [x] Step 8: Leakage detection and category canonicalisation
 - [x] Step 9: Regression targets and regressors
 - [x] Step 10: Cross-validation, with the spread shown next to every score
-- [ ] Step 11: Evaluation: confusion matrix and per-class report in the UI
+- [x] Step 11: Confusion matrix, drawn so a person can read it
 - [ ] Step 12: Model comparison across folds
 - [ ] Step 13: Feature importance
 - [ ] Step 14: Prediction demo

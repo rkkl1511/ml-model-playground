@@ -32,6 +32,9 @@ export function uploadCsv(file) {
 
 export const getSamples = () => request("/api/samples");
 
+// The numbers on the landing page, worked out from a real run.
+export const getShowcase = () => request("/api/showcase");
+
 export const loadSample = (id) => request(`/api/samples/${id}`, { method: "POST" });
 export const getProfile = (id) => request(`/api/datasets/${id}/profile`);
 

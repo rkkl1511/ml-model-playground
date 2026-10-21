@@ -5,6 +5,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from profiling import build_profile
 from samples import SAMPLES, build_sample, list_samples
+from showcase import get_showcase
 from store import get_dataset, save_dataset
 from summary import build_summary
 
@@ -13,6 +14,12 @@ router = APIRouter(prefix="/api", tags=["datasets"])
 MAX_BYTES = 10 * 1024 * 1024  # 10 MB
 MIN_ROWS = 10
 MIN_COLUMNS = 2
+
+
+@router.get("/showcase")
+def showcase():
+    """The numbers on the landing page, from a real run on a real dataset."""
+    return get_showcase()
 
 
 def parse_csv(raw: bytes) -> pd.DataFrame:

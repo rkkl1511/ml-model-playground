@@ -204,6 +204,27 @@ def test_cross_validation_can_be_switched_off():
     assert "held-out test rows" in result["verdict"]["text"]
 
 
+def test_the_showcase_holds_real_numbers():
+    # The landing page used to show made-up figures. It now shows what a
+    # real run on the iris dataset actually produced.
+    response = client.get("/api/showcase")
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["dataset"] == "iris"
+    assert body["best_score"] > body["baseline"]
+    assert len(body["models"]) == 3
+    for model in body["models"]:
+        assert 0 < model["score"] <= 100
+
+    matrix = body["confusion_matrix"]
+    names = body["class_names"]
+    assert len(matrix) == len(names)
+    assert all(len(row) == len(names) for row in matrix)
+    # The diagonal holds the right answers.
+    assert sum(matrix[i][i] for i in range(len(names))) > 0
+
+
 def test_a_regression_model_is_cross_validated_too():
     body = client.post("/api/samples/car_market").json()
     client.post(f"/api/datasets/{body['dataset_id']}/preprocess",

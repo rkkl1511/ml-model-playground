@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import HealthRing from "./HealthRing";
 import Panel from "./Panel";
 import FoldChart from "./FoldChart";
+import ConfusionMatrix from "./ConfusionMatrix";
 
 const toneStyle = {
     good: "border-emerald-400/30 bg-emerald-400/10 text-emerald-200",
@@ -130,6 +131,11 @@ function ClassificationResult({ result }) {
                     </div>
                 ))}
             </div>
+
+            <ConfusionMatrix
+                matrix={result.confusion_matrix}
+                classNames={result.class_names}
+            />
         </>
     );
 }
